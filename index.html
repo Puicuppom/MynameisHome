@@ -116,7 +116,7 @@
             margin-top: 0;
         }
 
-        /* --- ปุ่มลบ สไตล์ที่ 1 : Classic Red (ที่ปรับปรุงแล้ว) --- */
+        /* --- ปุ่มลบ สไตล์ที่ 1 : Classic Red (แก้ไขการจัดกลางแล้ว) --- */
         .remove-tier-btn {
             background-color: #fce8e6;
             color: #c5221f;
@@ -126,13 +126,17 @@
             height: 32px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 1.2rem;
-            line-height: 32px;
-            text-align: center;
+            font-size: 1.5rem; /* ปรับขนาดไอคอนให้ใหญ่ขึ้นเล็กน้อย */
             position: absolute;
             top: 10px;
             right: 10px;
             transition: all 0.2s ease-in-out;
+            /* --- ส่วนที่แก้ไขเพื่อจัดกลางเป๊ะๆ --- */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            line-height: 1;
         }
         .remove-tier-btn:hover {
             background-color: #dc3545;
