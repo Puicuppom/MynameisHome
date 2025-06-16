@@ -19,10 +19,26 @@
         <h1>เครื่องคำนวณผ่อนบ้าน</h1>
 
         <div class="form-grid" id="main-form">
-            <div class="form-group"><label for="loanAmount">ยอดเงินกู้ (บาท)</label><input type="number" id="loanAmount" value="3000000"></div>
-            <div class="form-group"><label for="monthlyPayment">ค่างวดต่อเดือน (บาท)</label><input type="number" id="monthlyPayment" value="20000"></div>
-            <div class="form-group"><label for="extraPayment">เงินโปะเพิ่มต่อเดือน (บาท)</label><input type="number" id="extraPayment" value="5000"></div>
-            <div class="form-group"><label for="birthDate">วัน/เดือน/ปีเกิด</label><input type="date" id="birthDate" value="1991-12-04"></div>
+            <div class="form-group">
+                <label for="loanAmount">ยอดเงินกู้ (บาท)</label>
+                <!-- ค่าเริ่มต้นยอดกู้คงเดิม -->
+                <input type="number" id="loanAmount" value="3000000">
+            </div>
+            <div class="form-group">
+                <label for="monthlyPayment">ค่างวดต่อเดือน (บาท)</label>
+                <!-- === แก้ไขค่าเริ่มต้นและ step === -->
+                <input type="number" id="monthlyPayment" value="15300" step="100">
+            </div>
+            <div class="form-group">
+                <label for="extraPayment">เงินโปะเพิ่มต่อเดือน (บาท)</label>
+                <!-- === แก้ไขค่าเริ่มต้นและ step === -->
+                <input type="number" id="extraPayment" value="2500" step="100">
+            </div>
+            <div class="form-group">
+                <label for="birthDate">วัน/เดือน/ปีเกิด</label>
+                <!-- ค่าเริ่มต้นวันเกิดคงเดิม -->
+                <input type="date" id="birthDate" value="1991-12-04">
+            </div>
         </div>
 
         <div id="interest-section">
@@ -40,6 +56,7 @@
     </div>
 
     <script>
+        // === ไม่ต้องแก้ไขส่วนนี้ แต่ผมแสดงให้เห็นว่ามันทำงานอย่างไร ===
         const interestTiersContainer = document.getElementById('interestRateTiers');
         const addRateTierBtn = document.getElementById('addRateTierBtn');
         const calculateBtn = document.getElementById('calculateBtn');
@@ -48,8 +65,7 @@
         
         const STORAGE_KEY = 'homeLoanCalculatorData';
 
-        // --- Local Storage Functions ---
-        function saveDataToLocalStorage() {
+        function saveDataToLocalStorage() { /* ...เหมือนเดิม... */
             const tiersData = [];
             interestTiersContainer.querySelectorAll('.rate-tier').forEach(tierEl => {
                 tiersData.push({
@@ -68,44 +84,42 @@
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
         }
-
-        function loadDataFromLocalStorage() {
+        function loadDataFromLocalStorage() { /* ...เหมือนเดิม... */
             const savedDataJSON = localStorage.getItem(STORAGE_KEY);
             if (savedDataJSON) {
                 const savedData = JSON.parse(savedDataJSON);
-                document.getElementById('loanAmount').value = savedData.loanAmount || '';
-                document.getElementById('monthlyPayment').value = savedData.monthlyPayment || '';
-                document.getElementById('extraPayment').value = savedData.extraPayment || '';
-                document.getElementById('birthDate').value = savedData.birthDate || '';
+                document.getElementById('loanAmount').value = savedData.loanAmount || '3000000';
+                document.getElementById('monthlyPayment').value = savedData.monthlyPayment || '15300';
+                document.getElementById('extraPayment').value = savedData.extraPayment || '2500';
+                document.getElementById('birthDate').value = savedData.birthDate || '1991-12-04';
 
-                interestTiersContainer.innerHTML = ''; // Clear default tiers
+                interestTiersContainer.innerHTML = '';
                 if (savedData.interestTiers && savedData.interestTiers.length > 0) {
                     savedData.interestTiers.forEach(tier => {
                         addInterestTier(tier.from, tier.to, tier.rate);
                     });
                 } else {
-                    loadDefaultTiers(); // Load default if saved tiers are empty
+                    loadDefaultTiers();
                 }
             } else {
-                loadDefaultTiers(); // Load default if no saved data
+                loadDefaultTiers();
             }
         }
-
-        function clearDataAndReset() {
+        function clearDataAndReset() { /* ...เหมือนเดิม... */
             if (confirm('คุณต้องการล้างข้อมูลที่บันทึกไว้ทั้งหมดและรีเซ็ตฟอร์มใช่หรือไม่?')) {
                 localStorage.removeItem(STORAGE_KEY);
                 location.reload();
             }
         }
 
+        // === แก้ไขฟังก์ชันนี้ ===
         function loadDefaultTiers() {
             interestTiersContainer.innerHTML = '';
-            addInterestTier(1, 36, 3.5);
-            addInterestTier(37, '', 6.8);
+            // สร้างแค่ 1 แถว: เดือนที่ 1 ถึง ตลอดไป (to = '')
+            addInterestTier(1, '', 6.8);
         }
 
-        // --- UI Functions ---
-        function addInterestTier(from = 1, to = '', rate = '') {
+        function addInterestTier(from = 1, to = '', rate = '') { /* ...เหมือนเดิม... */
             const tierCount = interestTiersContainer.children.length;
             const newTier = document.createElement('div');
             newTier.classList.add('rate-tier');
@@ -118,11 +132,9 @@
             interestTiersContainer.appendChild(newTier);
         }
 
-        // --- Event Listeners ---
+        // --- Event Listeners and Calculation (ทั้งหมดเหมือนเดิม) ---
         document.addEventListener('DOMContentLoaded', loadDataFromLocalStorage);
         resetBtn.addEventListener('click', clearDataAndReset);
-        
-        // Save on input change
         mainForm.addEventListener('input', saveDataToLocalStorage);
         interestTiersContainer.addEventListener('input', saveDataToLocalStorage);
         addRateTierBtn.addEventListener('click', () => {
@@ -132,19 +144,16 @@
             if (!lastToMonth) { alert('กรุณากรอก "เดือนที่ถึง" ของช่วงก่อนหน้า'); return; }
             const nextFromMonth = parseInt(lastToMonth, 10) + 1;
             addInterestTier(nextFromMonth);
-            saveDataToLocalStorage(); // Save after adding a new tier
+            saveDataToLocalStorage();
         });
         interestTiersContainer.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-tier-btn')) {
                 e.target.parentElement.remove();
-                saveDataToLocalStorage(); // Save after removing a tier
+                saveDataToLocalStorage();
             }
         });
-        
-        // --- Calculation Logic ---
         calculateBtn.addEventListener('click', function() {
-            saveDataToLocalStorage(); // Save before calculating
-            // ... (The rest of the calculation logic is the same as before)
+            saveDataToLocalStorage();
             let principal = parseFloat(document.getElementById('loanAmount').value);
             const monthlyPayment = parseFloat(document.getElementById('monthlyPayment').value);
             const extraPayment = parseFloat(document.getElementById('extraPayment').value) || 0;
