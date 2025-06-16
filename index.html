@@ -22,76 +22,77 @@
         <div class="form-grid" id="main-form">
             <div class="form-group">
                 <label for="loanAmount">ยอดเงินกู้ (บาท)</label>
-                <!-- === 1. เปลี่ยน type เป็น text และเพิ่ม attribute สำหรับ mobile === -->
+                <!-- === 1. แก้ไขทุกช่องที่เกี่ยวกับเงิน === -->
                 <input type="text" id="loanAmount" value="3,000,000" inputmode="numeric" pattern="[0-9,]*">
             </div>
             <div class="form-group">
                 <label for="monthlyPayment">ค่างวดต่อเดือน (บาท)</label>
-                <input type="number" id="monthlyPayment" value="15300" step="100">
+                <input type="text" id="monthlyPayment" value="15,300" inputmode="numeric" pattern="[0-9,]*">
             </div>
             <div class="form-group">
                 <label for="extraPayment">เงินโปะเพิ่มต่อเดือน (บาท)</label>
-                <input type="number" id="extraPayment" value="2500" step="100">
+                <input type="text" id="extraPayment" value="2,500" inputmode="numeric" pattern="[0-9,]*">
             </div>
             <div class="form-group">
                 <label for="birthDate">วัน/เดือน/ปีเกิด</label>
                 <input type="date" id="birthDate" value="1991-12-04">
             </div>
         </div>
-        <!-- HTML ส่วนที่เหลือเหมือนเดิม -->
+        
         <div id="interest-section"><label>อัตราดอกเบี้ยตามช่วงเวลา</label><div id="interestRateTiers"></div><button type="button" id="addRateTierBtn">+ เพิ่มช่วงดอกเบี้ย</button></div><div class="button-group"><button id="calculateBtn">คำนวณ</button><button id="resetBtn" type="button" class="secondary">ล้างข้อมูล</button></div><div id="result" style="display:none;"><div class="summary"><p>ระยะเวลาผ่อนชำระ: <span id="durationResult"></span></p><p>ผ่อนหมดเมื่ออายุ: <span id="ageResult"></span></p><p>จำนวนงวดทั้งหมด: <span id="monthsResult"></span> งวด</p><p>ดอกเบี้ยจ่ายทั้งหมด: <span id="totalInterestResult"></span> บาท</p></div><div id="table-container"><table id="payment-table"></table></div></div>
     </div>
 
     <script>
+        // === 2. ระบุ Element ทั้งหมดที่ต้องการจัดรูปแบบ ===
         const loanAmountInput = document.getElementById('loanAmount');
+        const monthlyPaymentInput = document.getElementById('monthlyPayment');
+        const extraPaymentInput = document.getElementById('extraPayment');
+        
+        // ส่วนที่เหลือ
         const interestTiersContainer = document.getElementById('interestRateTiers');
         const addRateTierBtn = document.getElementById('addRateTierBtn');
         const calculateBtn = document.getElementById('calculateBtn');
         const resetBtn = document.getElementById('resetBtn');
         const mainForm = document.getElementById('main-form');
-        const STORAGE_KEY = 'homeLoanCalculatorData_v3'; // Update storage version
+        const STORAGE_KEY = 'homeLoanCalculatorData_v4';
 
-        // --- 2. สร้าง Helper Functions สำหรับจัดรูปแบบ ---
+        // --- Helper Functions (ใช้ร่วมกัน) ---
         function formatNumberWithCommas(value) {
             if (!value) return '';
-            // ลบตัวอักษรที่ไม่ใช่ตัวเลขออกทั้งหมด
             const numberString = value.toString().replace(/[^0-9]/g, '');
             if (numberString === '') return '';
-            // ใช้ toLocaleString เพื่อใส่ comma
             return parseInt(numberString, 10).toLocaleString('en-US');
         }
 
         function parseFormattedNumber(value) {
             if (!value) return 0;
-            // ลบ comma และแปลงเป็นตัวเลข
             return parseFloat(value.toString().replace(/,/g, '')) || 0;
         }
 
-        // --- 3. เพิ่ม Event Listener สำหรับการพิมพ์ ---
-        loanAmountInput.addEventListener('input', (e) => {
-            const input = e.target;
-            const originalValue = input.value;
-            const cursorPosition = input.selectionStart;
+        // --- 3. สร้างฟังก์ชันสำหรับผูก Event และนำไปใช้กับทุกช่อง ---
+        function applyFormatting(inputElement) {
+            inputElement.addEventListener('input', (e) => {
+                const input = e.target;
+                const originalValue = input.value;
+                const cursorPosition = input.selectionStart;
+                const formattedValue = formatNumberWithCommas(originalValue);
+                input.value = formattedValue;
+                const newCursorPosition = cursorPosition + (formattedValue.length - originalValue.length);
+                input.setSelectionRange(newCursorPosition, newCursorPosition);
+            });
+        }
 
-            // จัดรูปแบบตัวเลข
-            const formattedValue = formatNumberWithCommas(originalValue);
-            
-            // อัปเดตค่าในช่อง input
-            input.value = formattedValue;
-            
-            // --- 4. จัดการตำแหน่ง Cursor ไม่ให้กระโดด ---
-            const newCursorPosition = cursorPosition + (formattedValue.length - originalValue.length);
-            // ตั้งค่าตำแหน่ง cursor กลับไปที่เดิม (หรือตำแหน่งที่ควรจะเป็น)
-            input.setSelectionRange(newCursorPosition, newCursorPosition);
-        });
+        // เรียกใช้ฟังก์ชันกับทุกช่องที่ต้องการ
+        applyFormatting(loanAmountInput);
+        applyFormatting(monthlyPaymentInput);
+        applyFormatting(extraPaymentInput);
 
-        // --- 5. ปรับปรุงฟังก์ชันที่เกี่ยวข้อง ---
+        // --- 4. ปรับปรุงฟังก์ชัน Save/Load/Calculate ---
         function saveDataToLocalStorage() {
-            // บันทึกค่าที่จัดรูปแบบแล้วลงไปเลย
             const dataToSave = {
                 loanAmount: loanAmountInput.value,
-                monthlyPayment: document.getElementById('monthlyPayment').value,
-                extraPayment: document.getElementById('extraPayment').value,
+                monthlyPayment: monthlyPaymentInput.value,
+                extraPayment: extraPaymentInput.value,
                 birthDate: document.getElementById('birthDate').value,
                 interestTiers: Array.from(interestTiersContainer.querySelectorAll('.rate-tier')).map(tierEl => ({
                     from: tierEl.querySelector('.fromMonth').value,
@@ -106,10 +107,9 @@
             const savedDataJSON = localStorage.getItem(STORAGE_KEY);
             if (savedDataJSON) {
                 const savedData = JSON.parse(savedDataJSON);
-                // เมื่อโหลดข้อมูล ให้จัดรูปแบบทันที
                 loanAmountInput.value = formatNumberWithCommas(savedData.loanAmount || '3000000');
-                document.getElementById('monthlyPayment').value = savedData.monthlyPayment || '15300';
-                document.getElementById('extraPayment').value = savedData.extraPayment || '2500';
+                monthlyPaymentInput.value = formatNumberWithCommas(savedData.monthlyPayment || '15300');
+                extraPaymentInput.value = formatNumberWithCommas(savedData.extraPayment || '2500');
                 document.getElementById('birthDate').value = savedData.birthDate || '1991-12-04';
                 interestTiersContainer.innerHTML = '';
                 if (savedData.interestTiers && savedData.interestTiers.length > 0) {
@@ -119,16 +119,22 @@
                 }
             } else {
                 loadDefaultTiers();
+                // จัดรูปแบบค่าเริ่มต้นด้วย
+                loanAmountInput.value = formatNumberWithCommas(loanAmountInput.value);
+                monthlyPaymentInput.value = formatNumberWithCommas(monthlyPaymentInput.value);
+                extraPaymentInput.value = formatNumberWithCommas(extraPaymentInput.value);
             }
         }
 
         calculateBtn.addEventListener('click', function() {
             saveDataToLocalStorage();
-            // --- 5.1 แก้ไขตรงนี้! ใช้ parseFormattedNumber ก่อนคำนวณ ---
+            // ใช้ parseFormattedNumber กับทุกช่อง
             let principal = parseFormattedNumber(loanAmountInput.value);
-
+            const monthlyPayment = parseFormattedNumber(monthlyPaymentInput.value);
+            const extraPayment = parseFormattedNumber(extraPaymentInput.value);
+            
             // ส่วนที่เหลือของโค้ดคำนวณ (เหมือนเดิม ไม่มีการเปลี่ยนแปลง)
-            const monthlyPayment=parseFloat(document.getElementById('monthlyPayment').value);const extraPayment=parseFloat(document.getElementById('extraPayment').value)||0;const birthDateStr=document.getElementById('birthDate').value;const interestTiers=[];const tierElements=interestTiersContainer.querySelectorAll('.rate-tier');for(let tierEl of tierElements){const from=parseInt(tierEl.querySelector('.fromMonth').value,10);const toVal=tierEl.querySelector('.toMonth').value;const to=toVal?parseInt(toVal,10):Infinity;const rate=parseFloat(tierEl.querySelector('.rate').value);if(!isNaN(from)&&!isNaN(rate))interestTiers.push({from,to,rate})}
+            const birthDateStr=document.getElementById('birthDate').value;const interestTiers=[];const tierElements=interestTiersContainer.querySelectorAll('.rate-tier');for(let tierEl of tierElements){const from=parseInt(tierEl.querySelector('.fromMonth').value,10);const toVal=tierEl.querySelector('.toMonth').value;const to=toVal?parseInt(toVal,10):Infinity;const rate=parseFloat(tierEl.querySelector('.rate').value);if(!isNaN(from)&&!isNaN(rate))interestTiers.push({from,to,rate})}
             if(isNaN(principal)||principal<=0||isNaN(monthlyPayment)||monthlyPayment<=0||interestTiers.length===0||!interestTiers[0].rate){alert('กรุณากรอกข้อมูลสำคัญให้ครบถ้วน: ยอดกู้, ค่างวด, และอัตราดอกเบี้ย');return}
             if(!birthDateStr){alert('กรุณากรอกวันเกิด');return}
             const totalMonthlyPayment=monthlyPayment+extraPayment;let monthCount=0;let totalInterestPaid=0;let remainingBalance=principal;let paymentSchedule=[];
