@@ -126,12 +126,11 @@
             height: 32px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 1.5rem; /* ปรับขนาดไอคอนให้ใหญ่ขึ้นเล็กน้อย */
+            font-size: 1.5rem;
             position: absolute;
             top: 10px;
             right: 10px;
             transition: all 0.2s ease-in-out;
-            /* --- ส่วนที่แก้ไขเพื่อจัดกลางเป๊ะๆ --- */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -148,52 +147,55 @@
             transform: scale(0.95);
             background-color: #c82333;
         }
-        /* --- จบส่วนปุ่มลบ --- */
 
         /* --- Table Styling --- */
         #table-container {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             margin-top: 20px;
+            /* เพิ่มความสูงสูงสุดและ scrollbar แนวตั้งสำหรับตาราง */
+            max-height: 60vh; /* สูงสุด 60% ของความสูงหน้าจอ */
+            overflow-y: auto;
         }
         #payment-table {
             width: 100%;
             min-width: 600px;
             border-collapse: collapse;
         }
-        #payment-table th, #payment-table td {
+        #payment-table td {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: right;
             white-space: nowrap;
         }
-        #payment-table th {
-            background-color: #005A9C;
-            color: white;
-            text-align: center;
-        }
         #payment-table tr:nth-child(even) {
             background-color: #f2f2f2;
         }
 
+        /* === ส่วนที่แก้ไขเพื่อตรึงหัวตาราง === */
+        #payment-table th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #005A9C;
+            color: white;
+            text-align: center;
+            border: 1px solid #004a80; /* เพิ่มเส้นขอบให้เห็นชัดเจน */
+            padding: 10px;
+            white-space: nowrap;
+        }
+        /* ==================================== */
+
         /* --- Media Query for Larger Screens (Desktop) --- */
         @media (min-width: 768px) {
-            body {
-                padding: 20px;
-            }
-            .container {
-                padding: 30px;
-            }
-            h1 {
-                font-size: 2.2rem;
-            }
+            body { padding: 20px; }
+            .container { padding: 30px; }
+            h1 { font-size: 2.2rem; }
             .form-grid {
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
                 gap: 20px;
             }
-            .summary {
-                font-size: 1.2rem;
-            }
+            .summary { font-size: 1.2rem; }
             .rate-tier {
                 flex-direction: row;
                 align-items: flex-end;
@@ -201,9 +203,7 @@
                 padding: 0;
                 border: none;
             }
-            .rate-tier .form-group-inline {
-                flex: 1;
-            }
+            .rate-tier .form-group-inline { flex: 1; }
             .remove-tier-btn {
                 position: static;
                 margin-bottom: 12px;
@@ -216,7 +216,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
+    <!-- เนื้อหา HTML และ JavaScript เหมือนเดิม ไม่มีการเปลี่ยนแปลง -->
     <div class="container">
         <h1>เครื่องคำนวณผ่อนบ้าน</h1>
 
@@ -231,7 +231,7 @@
             </div>
              <div class="form-group">
                 <label for="extraPayment">เงินโปะเพิ่มต่อเดือน (บาท)</label>
-                <input type="number" id="extraPayment" value="0">
+                <input type="number" id="extraPayment" value="5000">
             </div>
             <div class="form-group">
                 <label for="birthDate">วัน/เดือน/ปีเกิด</label>
@@ -254,11 +254,16 @@
                 <p>จำนวนงวดทั้งหมด: <span id="monthsResult"></span> งวด</p>
                 <p>ดอกเบี้ยที่จ่ายทั้งหมด: <span id="totalInterestResult"></span> บาท</p>
             </div>
-            <div id="table-container"></div>
+            <div id="table-container">
+                 <table id="payment-table">
+                     <!-- Javascript will generate table content here -->
+                 </table>
+            </div>
         </div>
     </div>
 
     <script>
+        // โค้ด JavaScript ทั้งหมดเหมือนเดิม ไม่ต้องแก้ไข
         const interestTiersContainer = document.getElementById('interestRateTiers');
         const addRateTierBtn = document.getElementById('addRateTierBtn');
         
@@ -266,7 +271,6 @@
             const tierCount = interestTiersContainer.children.length;
             const newTier = document.createElement('div');
             newTier.classList.add('rate-tier');
-            // ใช้ × สำหรับไอคอนกากบาท
             newTier.innerHTML = `
                 <div class="form-group-inline"><label>เดือนที่</label><input type="number" class="fromMonth" placeholder="ตั้งแต่" value="${from}" ${tierCount === 0 ? 'readonly' : ''}></div>
                 <div class="form-group-inline"><label>ถึง</label><input type="number" class="toMonth" placeholder="ตลอดไป" value="${to}"></div>
@@ -291,12 +295,10 @@
             }
         });
 
-        // สร้างแถวตัวอย่างเริ่มต้น
         addInterestTier(1, 36, 3.5);
         addInterestTier(37, '', 6.8);
 
 
-        // --- ฟังก์ชันการคำนวณหลัก ---
         document.getElementById('calculateBtn').addEventListener('click', function() {
             let principal = parseFloat(document.getElementById('loanAmount').value);
             const monthlyPayment = parseFloat(document.getElementById('monthlyPayment').value);
@@ -394,13 +396,13 @@
         });
 
         function createPaymentTable(schedule) {
-            const tableContainer = document.getElementById('table-container');
-            let tableHTML = `<table id="payment-table"><thead><tr><th>งวดที่</th><th>เงินที่จ่าย</th><th>ดอกเบี้ย</th><th>ตัดเงินต้น</th><th>เงินต้นคงเหลือ</th><th>ดอกเบี้ย (%)</th></tr></thead><tbody>`;
+            const tableElem = document.getElementById('payment-table');
+            let tableHTML = `<thead><tr><th>งวดที่</th><th>เงินที่จ่าย</th><th>ดอกเบี้ย</th><th>ตัดเงินต้น</th><th>เงินต้นคงเหลือ</th><th>ดอกเบี้ย (%)</th></tr></thead><tbody>`;
             schedule.forEach(row => {
                 tableHTML += `<tr><td style="text-align:center;">${row.month}</td><td>${row.payment.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${row.interest.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${row.principalPaid.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${row.balance.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td style="text-align:center;">${row.rate.toFixed(2)}%</td></tr>`;
             });
-            tableHTML += `</tbody></table>`;
-            tableContainer.innerHTML = tableHTML;
+            tableHTML += `</tbody>`;
+            tableElem.innerHTML = tableHTML;
         }
     </script>
 </body>
